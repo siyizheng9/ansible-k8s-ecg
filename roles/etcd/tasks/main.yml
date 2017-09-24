@@ -1,0 +1,51 @@
+---
+# tasks file for etcd
+- name: copy auth key files to etcd nodes
+  copy:
+    src: ssl/{{ item }}
+    dest: ~/
+  with_items: [ 'kubernetes-key.pem', 'kubernetes.pem', 'ca.pem' ]
+
+- name: make directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items: [ '/etc/etcd/','/var/lib/etcd']
+  become: yes
+
+- name: cp key files to dest path
+  shell: cd /home/vagrant/; cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
+  become: yes
+
+- name: get internal ip address
+  shell: "internal_ip=`hostname -I|grep -o '192.*[0-9]'`; echo -e \"$internal_ip\ncontroller${internal_ip: -1}\""
+  register: ip_and_name
+
+- name: check etcd binary existence
+  stat:
+    path: /usr/bin/etcd
+  register: etcd_existence
+
+- name: get etcd binary files
+  unarchive:
+    src: https://github.com/coreos/etcd/releases/download/v3.2.4/etcd-v3.2.4-linux-amd64.tar.gz
+    dest: /usr/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  become: yes
+  when: not etcd_existence.stat.exists
+
+- name: add etcd systemd unit file
+  template:
+    src: etcd.service.j2
+    dest: /etc/systemd/system/etcd.service
+  become: yes
+
+- name: start etcd
+  systemd:
+    name: etcd
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  register: etcd_started
+  become: yes

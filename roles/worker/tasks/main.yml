@@ -1,0 +1,129 @@
+---
+# tasks file for controller
+- name: get internal ip address
+  shell: "internal_ip=`hostname -I|grep -o '192.[.0-9]*'`; echo worker${internal_ip: -1}"
+  register: node_name
+
+- name: set hostname
+  shell: sudo hostname {{ node_name.stdout }}
+  
+- name: make directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  become: yes
+  with_items:
+    - '/var/run/kubernetes'
+    - '/var/lib/kubelet'
+    - '/var/lib/kube-proxy'
+    - '/var/lib/kubernetes'
+    - '/opt/cni'
+
+- name: cp files to the path
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+  become: yes
+  with_items: 
+    - { src: 'bootstrap/bootstrap.kubeconfig', dst: '/var/lib/kubelet/' }
+    - { src: 'bootstrap/kube-proxy.kubeconfig', dst: '/var/lib/kube-proxy' }
+    - { src: 'ssl/ca.pem', dst: '/var/lib/kubernetes/' }
+
+
+- name: check docker binary existence
+  stat:
+    path: /usr/bin/docker
+  register: docker_existence
+
+- name: get docker and cni binary files
+  unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  become: yes
+  when: not docker_existence.stat.exists
+  with_items:
+    - { src: 'https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz', dst: '/usr/bin/' }
+    - { src: 'https://storage.googleapis.com/kubernetes-release/network-plugins/cni-amd64-0799f5732f2a11b329d9e3d51b9c8f2e3759f2ff.tar.gz', dst: '/opt/cni/' }
+
+- name: check kube component binary existence
+  stat:
+    path: /usr/bin/kubelet
+  register: kube_existence
+
+- name: dowload kubelet, kube-proxy
+  get_url:
+    url: "{{ item }}"
+    dest: /usr/bin/
+    mode: +x
+  become: yes
+  with_items:
+    - 'https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kube-proxy'
+    - 'https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kubelet'
+  when: not kube_existence.stat.exists
+
+
+- name: get api server ip address
+  shell: "sudo cat /var/lib/kubelet/bootstrap.kubeconfig | grep server | cut -d ':' -f2,3,4 | tr -d '[:space:]'"
+  register: api_servers
+
+- name: add systemd unit file
+  template:
+    src: "{{ item.src }}"
+    dest: /etc/systemd/system/{{ item.dst }}
+  become: yes
+  with_items:
+      - { src: 'docker.service.j2', dst: 'docker.service' }
+      - { src: 'kubelet.service.j2', dst: 'kubelet.service' }
+      - { src: 'kube-proxy.service.j2', dst: 'kube-proxy.service' }
+
+
+- name: start docker, kubelet, kube-proxy processes
+  systemd:
+    name: "{{ item }}"
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  become: yes
+  with_items: [ 'docker', 'kubelet', 'kube-proxy' ]
+
+
+# setup flannel
+  
+- name: make directory
+  file:
+    path: /etc/kubernetes/ssl
+    state: directory
+  become: yes
+
+
+- name: cp files to the path
+  copy:
+    src: "ssl/{{ item }}"
+    dest: /etc/kubernetes/ssl 
+  become: yes
+  with_items: 
+    - kubernetes-key.pem 
+    - kubernetes.pem 
+    - ca.pem
+
+
+- name: check existence of flannl binary files
+  stat:
+    path: /usr/bin/flanneld
+  register: flannel_existence
+
+
+- name: dowload flannel binary files
+  get_url:
+    url: https://github.com/coreos/flannel/releases/download/v0.8.0/flanneld-amd64 
+    dest: /usr/bin/flanneld
+    mode: +x
+  become: yes
+  when: not flannel_existence.stat.exists
+
+- name: get flanneld_iface
+  shell: "hostname -I|grep -o '192.[.0-9]*'"
+  register: flanneld_iface
+

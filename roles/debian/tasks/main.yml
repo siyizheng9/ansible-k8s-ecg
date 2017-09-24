@@ -1,0 +1,62 @@
+---
+# tasks file for debian
+- name: Install basic package
+  apt: 
+    name: vim,tmux,tcpdump,conntrack,net-tools,git,zsh,curl 
+    state: present
+    update_cache: yes
+  become: yes
+  register: installation
+
+
+- name: Cloning oh-my-zsh
+  git:
+    repo=https://github.com/robbyrussell/oh-my-zsh
+    dest=~/.oh-my-zsh
+  register: cloning
+  when: installation|success
+
+
+- name: Creating new ~/.zshrc
+  copy:
+    src=~/.oh-my-zsh/templates/zshrc.zsh-template
+    dest=~/.zshrc
+  when: cloning|success
+  register: zshrc
+
+
+- name: insert configuration to .vimrc
+  blockinfile:
+    path: ~/.vimrc
+    marker: "\"{mark} ANSIBLE MANAGED BLOCK"
+    create: yes
+    block: |
+      syntax on
+      set nu
+      set wildmenu
+      imap jj <Esc> 
+      nnoremap ; :
+  when: installation|success
+
+
+- name: insert configuration to .zshrc
+  blockinfile:
+    path: ~/.zshrc
+    block: |
+      alias ll='ls -alhG'
+  when: zshrc|success
+
+
+- name: change user default shell to zsh
+  user:
+    name: "{{ ansible_user_id }}"
+    shell: /usr/bin/zsh
+  become: yes
+  when: zshrc|success
+
+
+- name: Create Kubernetes directory
+  file:
+   path: ~/kubernetes
+   state: directory
+

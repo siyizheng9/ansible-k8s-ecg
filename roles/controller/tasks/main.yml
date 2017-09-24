@@ -1,0 +1,70 @@
+---
+# tasks file for controller
+- name: change hostname
+  shell: sudo hostname controller1
+
+
+- name: make directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items: [ '/var/lib/kubernetes' ]
+  become: yes
+
+- name: cp files to the path
+  copy:
+    src: "{{ item }}"
+    dest: /var/lib/kubernetes/
+  become: yes
+  with_items: 
+    - 'bootstrap/token.csv'
+    - 'ssl/ca.pem'
+    - 'ssl/ca-key.pem'
+    - 'ssl/admin.pem'
+    - 'ssl/admin-key.pem'
+    - 'ssl/kube-proxy.pem'
+    - 'ssl/kube-proxy-key.pem'
+    - 'ssl/kubernetes.pem'
+    - 'ssl/kubernetes-key.pem'
+
+- name: check kube-apiserver binary existence
+  stat:
+    path: /usr/bin/kube-apiserver
+  register: kube_existence
+
+- name: dowload api-server, controller-manager, scheduler binary files 
+  get_url:
+    url: "{{ item }}"
+    dest: /usr/bin/
+    mode: +x
+  become: yes
+  with_items:
+    - 'https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kube-apiserver'
+    - 'https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kube-controller-manager'
+    - 'https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kube-scheduler'
+  when: not kube_existence.stat.exists
+
+
+- name: get internal ip address
+  shell: "hostname -I|grep -o '192.*[0-9]'"
+  register: internal_ip
+
+- name: add systemd unit file
+  template:
+    src: "{{ item.src }}"
+    dest: /etc/systemd/system/{{ item.dst }}
+  become: yes
+  with_items:
+      - { src: 'kube-apiserver.service.j2', dst: 'kube-apiserver.service' }
+      - { src: 'kube-controller-manager.service.j2', dst: 'kube-controller-manager.service' }
+      - { src: 'kube-scheduler.service.j2', dst: 'kube-scheduler.service' }
+
+
+- name: start kube-apiserver, kube-controller-manager, kube-scheduler progresses
+  systemd:
+    name: "{{ item }}"
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  become: yes
+  with_items: [ 'kube-apiserver', 'kube-controller-manager', 'kube-scheduler' ]

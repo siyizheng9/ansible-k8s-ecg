@@ -1,0 +1,49 @@
+---
+# tasks file for auth
+- name: dowload cfssl
+  get_url:
+    url: https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+    dest: /usr/local/bin/cfssl
+    mode: +x
+  become: yes
+
+- name: dowload cfssljson
+  get_url:
+    url: https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+    dest: /usr/local/bin/cfssljson
+    mode: +x
+  become: yes
+
+- name: generate auth keys
+  script: gen_certs.sh
+
+- name: find generated keys
+  shell: cd ssl; ls *.pem
+  register: files_to_sync
+
+
+- name: synchronize generated keys
+  synchronize: 
+    src: ssl/{{ item }}
+    dest: ssl/
+    mode: pull
+  with_items: "{{ files_to_sync.stdout_lines }}"
+
+# generate Bootstarp token
+- name: dowload kubectl
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: +x
+  become: yes
+
+- name: generate TLS Bootstrap Token and kubeconfig files
+  script: setup_auth.sh 
+
+- name: synchronize generated kubeconfig files
+  synchronize:
+    src: bootstrap/{{ item }}
+    dest: bootstrap/
+    mode: pull
+  with_items: [ "bootstrap.kubeconfig", "kube-proxy.kubeconfig", "token.csv" ]
+

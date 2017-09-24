@@ -1,0 +1,4 @@
+ssl/*
+bootstrap/*
+.venv/*
+main.retry
