@@ -6,7 +6,6 @@
 # and also mv file to the corret directories.
 
 # get cluster machines' ip addresses
-. ../lib/library.sh
 
 controller1="192.168.1.101"
 worker1="192.168.1.102"
@@ -15,7 +14,7 @@ worker2="192.168.1.103"
 mkdir ssl
 cd ssl
 
-print_progress 'creating CA configuration file'
+echo 'creating CA configuration file'
 touch ca-config.json
 cat > ca-config.json <<EOF
 {
@@ -38,7 +37,7 @@ cat > ca-config.json <<EOF
 }
 EOF
 
-print_progress 'creating CA certificate signing request'
+echo 'creating CA certificate signing request'
 cat > ca-csr.json <<EOF
 {
   "CN": "Kubernetes",
@@ -59,11 +58,11 @@ cat > ca-csr.json <<EOF
 EOF
 
 # generate CA certificate and private key
-print_progress 'generating CA certificate and private key'
+echo 'generating CA certificate and private key'
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca 
 
 # create admin certificate signing request
-print_progress 'creating amdin certificate signing request'
+echo 'creating amdin certificate signing request'
 cat > admin-csr.json <<EOF
 {
   "CN": "admin",
@@ -85,13 +84,13 @@ cat > admin-csr.json <<EOF
 EOF
 
 # generate admin certificate and private key
-print_progress 'generating amdin certificate and privat key'
+echo 'generating amdin certificate and privat key'
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 -profile=kubernetes admin-csr.json | cfssljson -bare admin
 
 
 # create kube-proxy certificate signing request
-print_progress 'ceating kub-proxy certificate signing request'
+echo 'ceating kub-proxy certificate signing request'
 cat > kube-proxy-csr.json <<EOF
 {
   "CN": "system:kube-proxy",
@@ -113,13 +112,13 @@ cat > kube-proxy-csr.json <<EOF
 EOF
 
 # generate kube-proxy client certificate and private key
-print_progress 'generating kube-proxy client certificate and private key'
+echo 'generating kube-proxy client certificate and private key'
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes \
 kube-proxy-csr.json | cfssljson -bare kube-proxy
 
 # create kubernetes certificate signing request
 # remember to add server's public ip address to host list
-print_progress 'create kuberntes certificate signing request'
+echo 'create kuberntes certificate signing request'
 cat > kubernetes-csr.json <<EOF
 {
     "CN": "kubernetes",
@@ -152,7 +151,7 @@ cat > kubernetes-csr.json <<EOF
 EOF
 
 # generate kubernetes certificate and private key
-print_progress 'generating kubernetes certificate and private key'
+echo 'generating kubernetes certificate and private key'
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
 
