@@ -46,6 +46,8 @@
     - { src: 'bootstrap/bootstrap.kubeconfig', dst: '/var/lib/kubelet/' }
     - { src: 'bootstrap/kube-proxy.kubeconfig', dst: '/var/lib/kube-proxy' }
     - { src: 'ssl/ca.pem', dst: '/var/lib/kubernetes/' }
+    - { src: "ssl/kubelet{{ node_name.stdout[-1] }}.pem", dst: '/var/lib/kubelet/kubelet.pem' }
+    - { src: "ssl/kubelet-key{{ node_name.stdout[-1] }}.pem", dst: '/var/lib/kubelet/kubelet-key.pem' }
 
 
 - name: check docker binary existence

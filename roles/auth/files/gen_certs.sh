@@ -155,3 +155,48 @@ echo 'generating kubernetes certificate and private key'
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
 
+
+echo 'generating kubelet certificate kyes'
+#tune the NODE_FQDN for each workernode separately
+for NODE_FQDN in 2 3; do
+cat > kubelet-csr.json <<EOF
+{
+    "CN": "system:node:worker${NODE_FQDN}",
+    "hosts": [
+      "${controller1}",
+      "${worker1}",
+      "${worker2}",
+      "10.32.0.1",
+      "127.0.0.1",
+      "kubernetes",
+      "kubernetes.default",
+      "kubernetes.default.svc",
+      "kubernetes.default.svc.cluster",
+      "kubernetes.default.svc.cluster.local",
+      "worker2",
+      "worker3"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "FI",
+            "L": "Helsinki",
+            "O": "Kubernetes",
+            "OU": "Cluster",
+            "ST": "Espoo"
+        }
+    ]
+}
+EOF
+
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
+-profile=kubernetes kubelet-csr.json | cfssljson -bare kubelet
+
+mv kubelet.pem kubelet${NODE_FQDN}.pem
+mv kubelet-key.pem kubelet-key${NODE_FQDN}.pem
+
+done
+
