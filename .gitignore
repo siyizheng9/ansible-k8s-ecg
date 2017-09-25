@@ -2,3 +2,4 @@ ssl/*
 bootstrap/*
 .venv/*
 main.retry
+log
