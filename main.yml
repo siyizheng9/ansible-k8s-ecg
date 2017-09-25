@@ -1,19 +1,23 @@
-# - hosts: debian
-#   roles:
-#     - debian
-# 
-# - hosts: auth
-#   roles:
-#     - auth
+- hosts: debian
+  roles:
+    - debian
 
-# - hosts: etcd
-#   roles:
-#     - etcd
+- hosts: auth
+  roles:
+    - auth
 
-# - hosts: controller
-#   roles:
-#     - controller
+- hosts: etcd
+  roles:
+    - etcd
+
+- hosts: controller
+  roles:
+    - controller
 
 - hosts: worker
   roles:
     - worker
+
+- hosts: controller
+  roles:
+    - addons
