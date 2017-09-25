@@ -68,3 +68,49 @@
     enabled: yes
   become: yes
   with_items: [ 'kube-apiserver', 'kube-controller-manager', 'kube-scheduler' ]
+
+
+- name: wait for apiserver process start running
+  pause: seconds=10
+
+
+- name: create rolebinding
+  shell: |
+      kubectl create clusterrolebinding kubelet-bootstrap \
+        --clusterrole=system:node-bootstrapper \
+        --user=kubelet-bootstrap
+  become: yes
+  ignore_errors: yes
+
+
+- name: check cidr config on etcd
+  shell: |
+      sudo etcdctl \
+        --ca-file=/etc/etcd/ca.pem \
+        --cert-file=/etc/etcd/kubernetes.pem \
+        --key-file=/etc/etcd/kubernetes-key.pem \
+        get /coreos.com/network/config
+  ignore_errors: yes
+  register: cidr_etcd
+
+
+- name: put cidr config to etcd
+  shell: |
+      sudo etcdctl \
+        --ca-file=/etc/etcd/ca.pem \
+        --cert-file=/etc/etcd/kubernetes.pem \
+        --key-file=/etc/etcd/kubernetes-key.pem \
+        set /coreos.com/network/config '{ "Network": "10.200.0.0/16", "Backend": {"Type": "vxlan"}}'
+  when: cidr_etcd|failed
+
+
+- name: cp approve_csr.sh to the target 
+  copy:
+    src: approve_csr.sh
+    dest: ~/
+
+- name: start a background shell script to aprove CSR
+  shell: nohup ~/approve_csr.sh &
+  args:
+    creates: ~/nohup.out
+
