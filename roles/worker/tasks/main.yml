@@ -1,11 +1,28 @@
 ---
-# tasks file for controller
+# tasks file for worker
+
+- name: insert hosts to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      192.168.1.101 controller1
+      192.168.1.102 worker2
+      192.168.1.103 worker3
+  become: yes
+      
 - name: get internal ip address
   shell: "internal_ip=`hostname -I|grep -o '192.[.0-9]*'`; echo worker${internal_ip: -1}"
   register: node_name
 
 - name: set hostname
   shell: sudo hostname {{ node_name.stdout }}
+
+- name: change hostname in /etc/hostname
+  template:
+    src: hostname.j2
+    dest: /etc/hostname
+  become: yes
+      
   
 - name: make directory
   file:
@@ -45,7 +62,8 @@
   when: not docker_existence.stat.exists
   with_items:
     - { src: 'https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz', dst: '/usr/bin/' }
-    - { src: 'https://storage.googleapis.com/kubernetes-release/network-plugins/cni-amd64-0799f5732f2a11b329d9e3d51b9c8f2e3759f2ff.tar.gz', dst: '/opt/cni/' }
+    - { src: 'https://storage.googleapis.com/kubernetes-release/network-plugins/cni-amd64-0799f5732f2a11b329d9e3d51b9c8f2e3759f2ff.tar.gz', dst: '/opt/cni/bin/' }
+
 
 - name: check kube component binary existence
   stat:
@@ -68,7 +86,7 @@
   shell: "sudo cat /var/lib/kubelet/bootstrap.kubeconfig | grep server | cut -d ':' -f2,3,4 | tr -d '[:space:]'"
   register: api_servers
 
-- name: add systemd unit file
+- name: add docker, kubelet, kube-proxy systemd unit file
   template:
     src: "{{ item.src }}"
     dest: /etc/systemd/system/{{ item.dst }}
@@ -79,26 +97,32 @@
       - { src: 'kube-proxy.service.j2', dst: 'kube-proxy.service' }
 
 
-- name: start docker, kubelet, kube-proxy processes
+- name: start kube-proxy processes
   systemd:
     name: "{{ item }}"
     daemon_reload: yes
     state: restarted
     enabled: yes
   become: yes
-  with_items: [ 'docker', 'kubelet', 'kube-proxy' ]
+  with_items: [ 'kube-proxy' ]
 
 
 # setup flannel
   
 - name: make directory
   file:
-    path: /etc/kubernetes/ssl
+    path: "{{ item }}"
     state: directory
   become: yes
+  with_items:
+    - '/etc/kubernetes/ssl'
+    - '/etc/systemd/system/docker.service.d'
+    - '/etc/kubernetes/cni/'
+    - '/etc/kubernetes/cni/net.d/'
 
 
-- name: cp files to the path
+- name: cp kubernetes-key.pem kubernetes.pem ca.pem to the path
+    
   copy:
     src: "ssl/{{ item }}"
     dest: /etc/kubernetes/ssl 
@@ -127,3 +151,35 @@
   shell: "hostname -I|grep -o '192.[.0-9]*'"
   register: flanneld_iface
 
+
+- name: add flanneld config files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+  become: yes
+  with_items:
+      - { src: '40-flannel.conf.j2', dst: '/etc/systemd/system/docker.service.d/40-flannel.conf' }
+      - { src: 'docker_opts_cni.env.j2', dst: '/etc/kubernetes/cni/docker_opts_cni.env' }
+      - { src: '10-flannel.conf.j2', dst: '/etc/kubernetes/cni/net.d/10-flannel.conf' }
+
+
+- name: add flanneld unit file
+  template:
+    src: "{{ item.src }}"
+    dest: /etc/systemd/system/{{ item.dst }}
+  become: yes
+  with_items:
+      - { src: 'flanneld.service.j2', dst: 'flanneld.service' }
+
+
+- name: put cidr to etcd
+  script: etcd_cidr_set.sh
+
+- name: start flanneld, docker, kubelet, processes
+  systemd:
+    name: "{{ item }}"
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  become: yes
+  with_items: [ 'flanneld', 'docker', 'kubelet', ]
