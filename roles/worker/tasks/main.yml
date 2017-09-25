@@ -35,6 +35,7 @@
     - '/var/lib/kube-proxy'
     - '/var/lib/kubernetes'
     - '/opt/cni'
+    - '/opt/cni/bin/'
 
 - name: cp files to the path
   copy:
@@ -184,6 +185,8 @@
 
 
 - name: reboot system
-  command: /sbin/reboot 
+  shell: reboot 
   become: yes
   when: start_services|succeeded
+  ignore_errors: yes
+  
