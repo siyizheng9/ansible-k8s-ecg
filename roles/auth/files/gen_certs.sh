@@ -158,7 +158,7 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 
 echo 'generating kubelet certificate kyes'
 #tune the NODE_FQDN for each workernode separately
-for NODE_FQDN in 2 3; do
+for NODE_FQDN in 1 2 3; do
 cat > kubelet-csr.json <<EOF
 {
     "CN": "system:node:worker${NODE_FQDN}",
@@ -173,6 +173,7 @@ cat > kubelet-csr.json <<EOF
       "kubernetes.default.svc",
       "kubernetes.default.svc.cluster",
       "kubernetes.default.svc.cluster.local",
+      "worker1",
       "worker2",
       "worker3"
     ],
