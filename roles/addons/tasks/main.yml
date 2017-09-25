@@ -13,7 +13,9 @@
   with_items: 
     - 'setup_dns.sh'
 
-- name: execute shell script for setting up dns addon
+- name: execute shell script for setting up addons
   shell: ~/addons/{{ item }}
+  args:
+    chdir: ~/addons/
   with_items:
     - 'setup_dns.sh'
