@@ -184,9 +184,9 @@
   register: start_services
 
 
-- name: reboot system
-  shell: reboot 
-  become: yes
-  when: start_services|succeeded
-  ignore_errors: yes
-  
+# - name: reboot system
+#   shell: /sbin/shutdown -r +1
+#   become: yes
+#   async: 0
+#   poll: 0
+#   when: start_services|succeeded
