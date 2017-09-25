@@ -3,3 +3,4 @@ bootstrap/*
 .venv/*
 main.retry
 log
+ansible.log
