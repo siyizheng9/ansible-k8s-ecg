@@ -1,0 +1,19 @@
+---
+# tasks file for addons
+- name: mkdir for addons
+  file:
+    dest: ~/addons
+    state: directory
+
+- name: cp files to the path
+  copy:
+    src: "{{ item }}"
+    dest: ~/addons
+    mode: +x
+  with_items: 
+    - 'setup_dns.sh'
+
+- name: execute shell script for setting up dns addon
+  shell: ~/addons/{{ item }}
+  with_items:
+    - 'setup_dns.sh'
