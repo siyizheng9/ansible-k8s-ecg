@@ -108,6 +108,7 @@
   copy:
     src: approve_csr.sh
     dest: ~/
+    mode: +x
 
 - name: start a background shell script to aprove CSR
   shell: nohup ~/approve_csr.sh &
