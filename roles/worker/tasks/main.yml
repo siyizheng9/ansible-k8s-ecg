@@ -172,9 +172,6 @@
       - { src: 'flanneld.service.j2', dst: 'flanneld.service' }
 
 
-- name: put cidr to etcd
-  script: etcd_cidr_set.sh
-
 - name: start flanneld, docker, kubelet, processes
   systemd:
     name: "{{ item }}"
@@ -183,3 +180,10 @@
     enabled: yes
   become: yes
   with_items: [ 'flanneld', 'docker', 'kubelet', ]
+  register: start_services
+
+
+- name: reboot system
+  command: /sbin/reboot 
+  become: yes
+  when: start_services|succeeded
