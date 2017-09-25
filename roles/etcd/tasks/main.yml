@@ -1,5 +1,18 @@
 ---
 # tasks file for etcd
+
+- name: insert hosts to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      192.168.1.101 controller
+      192.168.1.102 worker2
+      192.168.1.103 worker3
+  become: yes
+      
+- name: get internal ip address
+  shell: "internal_ip=`hostname -I|grep -o '192.[.0-9]*'`; echo worker${internal_ip: -1}"
+  register: node_name
 - name: copy auth key files to etcd nodes
   copy:
     src: ssl/{{ item }}
