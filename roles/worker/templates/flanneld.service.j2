@@ -8,8 +8,8 @@ Before=docker.service
 
 [Service]
 ExecStart=/usr/bin/flanneld \
-    --iface={{ flanneld_iface.stdout }} \
-    --etcd-endpoints=https://{{ etcd1 }}:2379,https://{{ etcd2 }}:2379,https://{{ etcd3 }}:2379 \
+    --iface={{ node_ip[0] }} \
+    --etcd-endpoints={% for ip in ETCD_NODES %}https://{{ ip }}:2379,{% endfor %} \
     --etcd-cafile=/etc/kubernetes/ssl/ca.pem \
     --etcd-certfile=/etc/kubernetes/ssl/kubernetes.pem \
     --etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem

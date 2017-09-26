@@ -5,18 +5,16 @@
   blockinfile:
     path: /etc/hosts
     block: |
-      192.168.1.101 controller1
-      192.168.1.101 worker1
-      192.168.1.102 worker2
-      192.168.1.103 worker3
+      {% for node in K8S_NODES %}
+      {{ node.ip }} {{ node.hostname }}
+      {% endfor %}
   become: yes
-      
-- name: get internal ip address
-  shell: "internal_ip=`hostname -I|grep -o '192.[.0-9]*'`; echo worker${internal_ip: -1}"
-  register: node_name
+
+- debug:
+    msg: "node_id={{ node_ip }}, node_name={{ node_name }}"
 
 - name: set hostname
-  shell: sudo hostname {{ node_name.stdout }}
+  shell: sudo hostname {{ node_name }}
 
 - name: change hostname in /etc/hostname
   template:
@@ -47,8 +45,8 @@
     - { src: 'bootstrap/bootstrap.kubeconfig', dst: '/var/lib/kubelet/' }
     - { src: 'bootstrap/kube-proxy.kubeconfig', dst: '/var/lib/kube-proxy' }
     - { src: 'ssl/ca.pem', dst: '/var/lib/kubernetes/' }
-    - { src: "ssl/kubelet{{ node_name.stdout[-1] }}.pem", dst: '/var/lib/kubelet/kubelet.pem' }
-    - { src: "ssl/kubelet-key{{ node_name.stdout[-1] }}.pem", dst: '/var/lib/kubelet/kubelet-key.pem' }
+    - { src: "ssl/kubelet{{ node_name[-1] }}.pem", dst: '/var/lib/kubelet/kubelet.pem' }
+    - { src: "ssl/kubelet-key{{ node_name[-1] }}.pem", dst: '/var/lib/kubelet/kubelet-key.pem' }
 
 
 - name: check docker binary existence
@@ -150,11 +148,6 @@
     mode: +x
   become: yes
   when: not flannel_existence.stat.exists
-
-- name: get flanneld_iface
-  shell: "hostname -I|grep -o '192.[.0-9]*'"
-  register: flanneld_iface
-
 
 - name: add flanneld config files
   template:
