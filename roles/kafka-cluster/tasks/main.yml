@@ -1,2 +1,11 @@
 ---
 # tasks file for kafka-cluster
+
+- name: cp yml files to the target machine
+  synchronize:
+    src: "{{ item.src }}"
+    dest: kubernetes/{{ item.dst }}
+  with_items:
+      - { src: 'zookeeper/', dst: 'zookeeper/' }
+      - { src: 'kafka/', dst: 'kafka/' }
+      - { src: 'connector/', dst: 'connector/' }
