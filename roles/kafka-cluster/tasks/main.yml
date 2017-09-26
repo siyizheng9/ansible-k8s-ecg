@@ -3,9 +3,11 @@
 
 - name: cp yml files to the target machine
   synchronize:
-    src: "{{ item.src }}"
-    dest: kubernetes/{{ item.dst }}
+    src: "{{ item }}"
+    dest: kubernetes/{{ item }}
   with_items:
-      - { src: 'zookeeper/', dst: 'zookeeper/' }
-      - { src: 'kafka/', dst: 'kafka/' }
-      - { src: 'connector/', dst: 'connector/' }
+      - 'zookeeper/'
+      - 'kafka/'
+      - 'connector/'
+      - 'mongo/'
+      - 'mqtt/'
