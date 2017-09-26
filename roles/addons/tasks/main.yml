@@ -5,13 +5,14 @@
     dest: ~/addons
     state: directory
 
-- name: cp files to the path
+- name: cp script files to the path
   copy:
     src: "{{ item }}"
     dest: ~/addons
     mode: +x
   with_items: 
     - 'setup_dns.sh'
+    - 'busybox.yml'
 
 - name: execute shell script for setting up addons
   shell: ~/addons/{{ item }}
@@ -19,3 +20,6 @@
     chdir: ~/addons/
   with_items:
     - 'setup_dns.sh'
+
+- name: create busybox pod
+  command: kubectl create -f ~/addons/busybox.yml
