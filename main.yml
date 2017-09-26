@@ -19,15 +19,28 @@
   vars:
     - ETCD_NODES: [ "192.168.2.101", "192.168.2.102", "192.168.2.103" ]
 
-# - hosts: controller
-#   roles:
-#     - controller
-# 
-# - hosts: worker
-#   roles:
-#     - worker
-# 
-# - hosts: controller
-#   roles:
-#     - addons
-# 
+- hosts: controller
+  roles:
+    - controller
+  vars:
+    - CONTROLLER_IP: "192.168.2.101"
+    - ETCD_NODES: [ "192.168.2.101", "192.168.2.102", "192.168.2.103" ]
+
+- hosts: worker
+  roles:
+    - worker
+  vars:
+    - K8S_NODES: [
+    {"hostname":"controller", "ip":"192.168.2.101"},
+    {"hostname":"worker1", "ip":"192.168.2.101"},
+    {"hostname":"worker2", "ip":"192.168.2.102"},
+    {"hostname":"worker3", "ip":"192.168.2.103"}
+    ]
+    - ETCD_NODES: [ "192.168.2.101", "192.168.2.102", "192.168.2.103" ]
+    - NETWORK_PLUGIN: "cni"
+    - node_ip: "{{ ETCD_NODES | intersect(ansible_all_ipv4_addresses) }}"
+    - node_name: "worker{{ node_ip[0][-1] }}"
+
+- hosts: controller
+  roles:
+    - addons
