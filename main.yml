@@ -44,3 +44,7 @@
 - hosts: controller
   roles:
     - addons
+  
+- hosts: controller
+  roles:
+    - kafka-cluster
