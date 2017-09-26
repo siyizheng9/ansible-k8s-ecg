@@ -44,11 +44,6 @@
     - 'https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kube-scheduler'
   when: not kube_existence.stat.exists
 
-
-- name: get internal ip address
-  shell: "hostname -I|grep -o '192.*[0-9]'"
-  register: internal_ip
-
 - name: add systemd unit file
   template:
     src: "{{ item.src }}"
