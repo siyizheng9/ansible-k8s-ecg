@@ -2,9 +2,11 @@
 Description=etcd
 Documentation=https://github.com/coreos
 
+{% set IP = ETCD_NODES | intersect(ansible_all_ipv4_addresses) %}
+
 [Service]
 ExecStart=/usr/bin/etcd \
-  --name {{ ip_and_name.stdout_lines[1] }} \
+  --name etcd{{ IP[0][-1] }} \
   --cert-file=/etc/etcd/kubernetes.pem \
   --key-file=/etc/etcd/kubernetes-key.pem \
   --peer-cert-file=/etc/etcd/kubernetes.pem \
@@ -13,12 +15,12 @@ ExecStart=/usr/bin/etcd \
   --peer-trusted-ca-file=/etc/etcd/ca.pem \
   --peer-client-cert-auth \
   --client-cert-auth \
-  --initial-advertise-peer-urls https://{{ ip_and_name.stdout_lines[0] }}:2380 \
-  --listen-peer-urls https://{{ ip_and_name.stdout_lines[0] }}:2380 \
-  --listen-client-urls https://{{ ip_and_name.stdout_lines[0] }}:2379,http://127.0.0.1:2379 \
-  --advertise-client-urls https://{{ ip_and_name.stdout_lines[0] }}:2379 \
+  --initial-advertise-peer-urls https://{{ IP[0] }}:2380 \
+  --listen-peer-urls https://{{ IP[0] }}:2380 \
+  --listen-client-urls https://{{ IP[0] }}:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls https://{{ IP[0] }}:2379 \
   --initial-cluster-token etcd-cluster-0 \
-  --initial-cluster controller1=https://{{ ETCD1 }}:2380,controller2=https://{{ ETCD2 }}:2380,controller3=https://{{ ETCD3 }}:2380 \
+  --initial-cluster {% for ip in ETCD_NODES %}etcd{{ ip[-1] }}=https://{{ ip }}:2380,{% endfor %} \
   --initial-cluster-state new \
   --data-dir=/var/lib/etcd
 Restart=on-failure
@@ -26,3 +28,4 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+
