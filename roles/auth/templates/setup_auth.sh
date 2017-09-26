@@ -3,7 +3,7 @@
 mkdir bootstrap
 cd bootstrap
 
-controller1='192.168.1.101'
+# controller1='192.168.1.101'
 
 # start generating TLS Bootstrap Token
 echo 'Creating Token auth file'
@@ -18,7 +18,7 @@ echo 'Create the bootstrap kubeconfig file'
 kubectl config set-cluster kubernetes \
   --certificate-authority='../ssl/ca.pem' \
   --embed-certs=true \
-  --server=https://${controller1}:6443 \
+  --server=https://{{ CONTROLLER }}:6443 \
   --kubeconfig=bootstrap.kubeconfig
 
 kubectl config set-credentials kubelet-bootstrap \
@@ -38,7 +38,7 @@ echo 'Create the kube-proxy kubeconfig'
 kubectl config set-cluster kubernetes\
   --certificate-authority='../ssl/ca.pem' \
   --embed-certs=true \
-  --server=https://${controller1}:6443 \
+  --server=https://{{ CONTROLLER }}:6443 \
   --kubeconfig=kube-proxy.kubeconfig
 
 kubectl config set-credentials kube-proxy \

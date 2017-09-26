@@ -14,8 +14,17 @@
     mode: +x
   become: yes
 
+- name: cp gen_certs.sh and setup_auth.sh to the target machine
+  template:
+    src: "{{ item }}"
+    dest: '~/'
+    mode: +x
+  with_items:
+      - 'setup_auth.sh'
+      - 'gen_certs.sh'
+
 - name: generate auth keys
-  script: gen_certs.sh
+  command: '~/gen_certs.sh'
 
 - name: find generated keys
   shell: cd ssl; ls *.pem
@@ -38,7 +47,7 @@
   become: yes
 
 - name: generate TLS Bootstrap Token and kubeconfig files
-  script: setup_auth.sh 
+  command: '~/setup_auth.sh' 
 
 - name: synchronize generated kubeconfig files
   synchronize:

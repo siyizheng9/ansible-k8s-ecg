@@ -7,9 +7,9 @@
 
 # get cluster machines' ip addresses
 
-controller1="192.168.1.101"
-worker1="192.168.1.102"
-worker2="192.168.1.103"
+# controller1="192.168.1.101"
+# worker1="192.168.1.102"
+# worker2="192.168.1.103"
 
 mkdir ssl
 cd ssl
@@ -123,9 +123,9 @@ cat > kubernetes-csr.json <<EOF
 {
     "CN": "kubernetes",
     "hosts": [
-      "${controller1}",
-      "${worker1}",
-      "${worker2}",
+      {% for node in K8S_NODES %}
+      "{{ node.ip }}",
+      {% endfor %}
       "10.32.0.1",
       "127.0.0.1",
       "kubernetes",
@@ -158,24 +158,23 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 
 echo 'generating kubelet certificate kyes'
 #tune the NODE_FQDN for each workernode separately
-for NODE_FQDN in 1 2 3; do
+for NODE_FQDN in {% for node in K8S_NODES %} {{ node.hostname }} {% endfor %} ; do
+
 cat > kubelet-csr.json <<EOF
 {
-    "CN": "system:node:worker${NODE_FQDN}",
+    "CN": "system:node:${NODE_FQDN}",
     "hosts": [
-      "${controller1}",
-      "${worker1}",
-      "${worker2}",
+      {% for node in K8S_NODES %}
+      "{{ node.hostname }}",
+      "{{ node.ip }}",
+      {% endfor %}
       "10.32.0.1",
       "127.0.0.1",
       "kubernetes",
       "kubernetes.default",
       "kubernetes.default.svc",
       "kubernetes.default.svc.cluster",
-      "kubernetes.default.svc.cluster.local",
-      "worker1",
-      "worker2",
-      "worker3"
+      "kubernetes.default.svc.cluster.local"
     ],
     "key": {
         "algo": "rsa",

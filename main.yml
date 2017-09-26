@@ -1,23 +1,31 @@
-- hosts: debian
-  roles:
-    - debian
-
+# - hosts: debian
+#   roles:
+#     - debian
+# 
 - hosts: auth
   roles:
     - auth
-
-- hosts: etcd
-  roles:
-    - etcd
-
-- hosts: controller
-  roles:
-    - controller
-
-- hosts: worker
-  roles:
-    - worker
-
-- hosts: controller
-  roles:
-    - addons
+  vars:
+    - CONTROLLER: "192.168.1.101"
+    - K8S_NODES: [
+    {"hostname":"worker1", "ip":"192.168.1.101"},
+    {"hostname":"worker2", "ip":"192.168.1.102"},
+    {"hostname":"worker3", "ip":"192.168.1.103"}
+]
+# 
+# - hosts: etcd
+#   roles:
+#     - etcd
+# 
+# - hosts: controller
+#   roles:
+#     - controller
+# 
+# - hosts: worker
+#   roles:
+#     - worker
+# 
+# - hosts: controller
+#   roles:
+#     - addons
+# 
