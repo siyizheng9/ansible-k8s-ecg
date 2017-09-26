@@ -1,0 +1,12 @@
+kind: ConfigMap
+metadata:
+  name: mqtt-broker-config
+apiVersion: v1
+data:
+  mosquitto.conf: |-
+    # From k8s ConfigMap
+    log_dest syslog 
+    log_dest stdout 
+    listener 1883
+    listener 1884
+    protocol websockets
