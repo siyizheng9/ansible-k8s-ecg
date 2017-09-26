@@ -195,8 +195,8 @@ EOF
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json \
 -profile=kubernetes kubelet-csr.json | cfssljson -bare kubelet
 
-mv kubelet.pem kubelet${NODE_FQDN}.pem
-mv kubelet-key.pem kubelet-key${NODE_FQDN}.pem
+mv kubelet.pem kubelet${NODE_FQDN: -1}.pem
+mv kubelet-key.pem kubelet-key${NODE_FQDN: -1}.pem
 
 done
 
