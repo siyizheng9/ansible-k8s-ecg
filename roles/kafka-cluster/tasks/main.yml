@@ -11,3 +11,5 @@
       - 'connector/'
       - 'mongo/'
       - 'mqtt/'
+      - 'create.sh'
+      - 'delete.sh'
