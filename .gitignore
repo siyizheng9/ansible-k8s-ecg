@@ -4,3 +4,4 @@ bootstrap/*
 main.retry
 log
 ansible.log
+facts
