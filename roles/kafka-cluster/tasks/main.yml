@@ -11,5 +11,13 @@
       - 'connector/'
       - 'mongo/'
       - 'mqtt/'
+      - 'flask/'
       - 'create.sh'
       - 'delete.sh'
+
+- name: start deploying k8s pods
+  command: ./create.sh
+  args:
+    chdir: kubernetes/
+  async: 600
+  poll: 10
