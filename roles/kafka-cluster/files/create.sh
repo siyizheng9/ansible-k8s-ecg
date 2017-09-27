@@ -36,4 +36,6 @@ kubectl apply -f mongo/
 kubectl apply -f connector/mongodb/
 kubectl apply -f connector/mqtt/
 
+kubectl apply -f flask/
+
 # kubectl -n kafka exec kafka-0 -- bin/kafka-topics.sh --list --zookeeper zookeeper.kafka
