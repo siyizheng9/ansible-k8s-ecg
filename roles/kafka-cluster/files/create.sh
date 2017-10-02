@@ -28,7 +28,7 @@ kubectl apply -f kafka/
 
 check_readiness kafka
 
-kubectl -n kafka exec kafka-0 -- bin/kafka-topics.sh --create --zookeeper zookeeper.kafka --replication-factor 1 --partitions 1 --topic mqtt-test
+kubectl -n kafka exec kafka-0 -- bin/kafka-topics.sh --create --zookeeper zookeeper.kafka --replication-factor 3 --partitions 1 --topic mqtt-test
 
 kubectl apply -f mqtt/
 kubectl apply -f mongo/
