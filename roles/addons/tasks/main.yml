@@ -13,6 +13,10 @@
   with_items: 
     - 'setup_dns.sh'
     - 'busybox.yml'
+    - 'kubedns-cm.yaml'
+    - 'kubedns-controller.yaml'
+    - 'kubedns-sa.yaml'
+    - 'kubedns-svc.yaml'
 
 - name: execute shell script for setting up addons
   shell: ~/addons/{{ item }}
