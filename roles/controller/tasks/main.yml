@@ -79,7 +79,7 @@
   retries: 5
   delay: 10
   until: command_result|succeeded
-  # ignore_errors: yes
+  ignore_errors: yes
   # until: command_result.stdout.find("created") != -1
 
 
